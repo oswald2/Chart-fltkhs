@@ -1,0 +1,16 @@
+
+flags:
+  fltkhs: 
+    bundled: true
+
+resolver: lts-13.21
+extra-deps:
+- fltkhs-0.8.0.2
+- thyme-0.3.5.5
+
+nix:
+  packages:
+    - autoconf
+    - pkgconfig
+    - xorg.libX11
+    - xorg.libXft
