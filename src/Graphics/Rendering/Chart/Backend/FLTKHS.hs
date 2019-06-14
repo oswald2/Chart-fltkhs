@@ -17,6 +17,13 @@ module Graphics.Rendering.Chart.Backend.FLTKHS
     , FLTKHSEnv
     , defaultEnv
     , withFlClip
+
+
+    , flStrokePath
+    , flFillPath
+    , flTextSize
+    , flDrawText
+    , flWithFontStyle
 )
 where
 
@@ -125,17 +132,36 @@ pointToPosition p = Position (X x) (Y y)
         y = Prelude.round (p_y p)
 
 
+instance Show Path where
+    show (MoveTo p path) = "MoveTo " <> show p <> " " <> show path
+    show (LineTo p path) = "LineTo " <> show p <> " " <> show path
+    show (Arc p rad a1 a2 path) = "Arc " <> show p <> " " <> show rad <> " " <> show a1 <> " " <> show a2 <> show path
+    show (ArcNeg p rad a1 a2 path) = "ArcNeg " <> show p <> " " <> show rad <> " " <> show a1 <> " " <> show a2 <> show path
+    show End = "End"
+    show G.Close = "Close"
+
 
 flStrokePath :: FLTKHSEnv -> Path -> IO ()
-flStrokePath env p =
+flStrokePath env p = do
+
+    putStrLn $ "StrokePath: " <> show p <> "\n\n"
+
     withColor $ do
         flcSetColor (flPathColor env)
-        go p (isClosed p)
+        let closed = isClosed p
+        if closed
+            then flcBeginLoop
+            else flcBeginLine
+        go p closed
     where
         go (MoveTo p path) closed = do
             if closed
-                then flcBeginLoop
-                else flcBeginLine
+                then do
+                    flcEndLoop
+                    flcBeginLoop
+                else do
+                    flcEndLine
+                    flcBeginLine
             flcVertex (PrecisePosition (PreciseX (p_x p))
                 (PreciseY (p_y p)))
             go path closed
@@ -161,18 +187,25 @@ flStrokePath env p =
             if closed
                 then flcEndLoop
                 else flcEndLine
-        go G.Close _ =
-            flcEndLoop
+        go G.Close closed =
+            if closed
+                then flcEndLoop
+                else flcEndLine
+
 
 
 flFillPath :: FLTKHSEnv -> Path -> IO ()
-flFillPath env p =
+flFillPath env p = do
+
+    putStrLn $ "FillPath: " <> show p <> "\n\n"
+
     withColor $ do
         flcSetColor (flFillColor env)
+        flcBeginComplexPolygon
         go p
     where
         go (MoveTo p path) = do
-            flcBeginComplexPolygon
+            flcGap
             flcVertex (PrecisePosition (PreciseX (p_x p))
                 (PreciseY (p_y p)))
             go path
@@ -204,18 +237,22 @@ flTextSize :: String -> IO TextSize
 flTextSize text = do
     FL.Rectangle (Position (X x) (Y y)) (Size (Width w) (Height h)) <- flcTextExtents (T.pack text)
     descent <- flcDescent
-    pure TextSize {
+    let res = TextSize {
         textSizeWidth = fromIntegral w
         , textSizeHeight = fromIntegral h
         , textSizeDescent = fromIntegral descent
         , textSizeAscent = fromIntegral (h - descent)
         , textSizeYBearing = 0
         }
+    putStrLn $ "TextSize: " <> show res <> "\n\n"
+    pure res
 
 flDrawText :: FLTKHSEnv -> Point -> String -> IO ()
 flDrawText env p text = withColor $ do
+    putStrLn $ "DrawText: " <> show p <> " " <> text <> "\n\n"
     flcSetColor (flFontColor env)
     flcDraw (T.pack text) (pointToPosition p)
+
 
 
 
@@ -233,7 +270,10 @@ clampI x | x < 0 = 0
     | otherwise = x
 
 flWithLineStyle :: FLTKHSEnv -> G.LineStyle -> BackendProgram a -> IO a
-flWithLineStyle env ls p =
+flWithLineStyle env ls p = do
+
+    putStrLn $ "WithLineStyle: " <> show ls <> "\n\n"
+
     withSavedLineStyle $ do
         let width = Prelude.round (_line_width ls)
             capStyle = convCapStyle (_line_cap ls)
@@ -251,8 +291,11 @@ flWithLineStyle env ls p =
         runBackend env {flPathColor = col} p
 
 flWithFillStyle :: FLTKHSEnv -> FillStyle -> BackendProgram a -> IO a
-flWithFillStyle env fs =
-    runBackend env {flFillColor = convColor (_fill_color fs)}
+flWithFillStyle env fs p = do
+
+    putStrLn $ "WithFillStyle: " <> show fs <> "\n\n"
+
+    runBackend env {flFillColor = convColor (_fill_color fs)} p
 
 
 withFlClip :: FL.Rectangle -> IO a -> IO a
@@ -260,13 +303,6 @@ withFlClip rect action = do
     flcPushClip rect
     a <- action
     flcPopClip
-    pure a
-
-withMatrix :: IO a -> IO a
-withMatrix action = do
-    flcPushMatrix
-    a <- action
-    flcPopMatrix
     pure a
 
 
@@ -285,8 +321,19 @@ flWithClipRegion env (Rect (Point x1 y1) (Point x2 y2)) p = do
     withFlClip rect (runBackend env p)
 
 
+withMatrix :: IO a -> IO a
+withMatrix action = do
+    flcPushMatrix
+    a <- action
+    flcPopMatrix
+    pure a
+
+
 flWithTransform :: FLTKHSEnv -> Matrix -> BackendProgram a -> IO a
-flWithTransform env (Matrix xx yx xy yy x0 y0) p = withMatrix $ do
+flWithTransform env mat@(Matrix xx yx xy yy x0 y0) p = withMatrix $ do
+
+    putStrLn $ "WithTransform: " <> show mat <> "\n\n"
+
     flcMultMatrix xx yx xy yy (ByXY (ByX x0) (ByY y0))
     runBackend env p
 
@@ -302,6 +349,9 @@ withFlFont action = do
 
 flWithFontStyle :: FLTKHSEnv -> FontStyle -> BackendProgram a -> IO a
 flWithFontStyle env font p = withFlFont $ do
+
+    putStrLn $ "WithFontStyle: " <> show font <> "\n\n"
+
     let fontSize = FontSize (Prelude.round (_font_size font))
         flfont = selectFont font
     flcSetFont flfont fontSize
