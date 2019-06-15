@@ -26,13 +26,44 @@ Flag FastCompile
    Manual: True
    Default: False
 
-Executable Chart-fltkhs
-  Main-Is: Chart-fltkhs.hs
 
-  other-modules:
-    Graphics.Rendering.Chart.Backend.FLTKHS
+Library
+    exposed-modules:
+        Graphics.Rendering.Chart.Backend.FLTKHS
 
-  Hs-Source-Dirs: src/
+    hs-source-dirs: src
+    default-language: Haskell2010
+    other-extensions:
+        OverloadedStrings
+        BangPatterns
+    build-depends:
+        base == 4.*,
+        fltkhs >= 0.8.0.2,
+        text >= 1.2.2.0,
+        vector,
+        Chart,
+        operational,
+        colour,
+        data-default-class
+
+
+    ghc-Options: -Werror -threaded
+    if impl(ghc >= 7.10) && impl(ghc < 8.0) && flag(FastCompile)
+        ghc-Options: -fno-specialise -fmax-simplifier-iterations=0 -fsimplifier-phases=0
+    else
+        ghc-Options: -O2
+    if os(windows)
+        ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
+    if os(darwin)
+        ghc-Options: "-optl-Wl,-lfltkc"
+    if !os(darwin) && !os(windows)
+        ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
+
+
+Executable Example1
+  Main-Is: Example1.hs
+
+  Hs-Source-Dirs: examples/
   Build-Depends:
     base == 4.*,
     fltkhs >= 0.8.0.2,
@@ -42,10 +73,10 @@ Executable Chart-fltkhs
     thyme,
     lens,
     Chart,
-    mtl,
     operational,
     colour,
-    data-default-class
+    data-default-class,
+    Chart-fltkhs
 
   default-language: Haskell2010
   ghc-Options: -Werror -threaded
@@ -60,3 +91,299 @@ Executable Chart-fltkhs
   if !os(darwin) && !os(windows)
    ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
 
+
+
+Executable Example2
+  Main-Is: Example2.hs
+  other-modules: Prices
+  Hs-Source-Dirs: examples/
+  Build-Depends:
+    base == 4.*,
+    fltkhs >= 0.8.0.2,
+    text >= 1.2.2.0,
+    vector,
+    array,
+    time,
+    lens,
+    Chart,
+    operational,
+    colour,
+    data-default-class,
+    Chart-fltkhs
+
+  default-language: Haskell2010
+  ghc-Options: -Werror -threaded
+  if impl(ghc >= 7.10) && impl(ghc < 8.0) && flag(FastCompile)
+     ghc-Options: -fno-specialise -fmax-simplifier-iterations=0 -fsimplifier-phases=0
+  else
+     ghc-Options: -O2
+  if os(windows)
+   ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
+  if os(darwin)
+   ghc-Options: "-optl-Wl,-lfltkc"
+  if !os(darwin) && !os(windows)
+   ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
+
+
+Executable Example3
+  Main-Is: Example3.hs
+  other-modules: Prices
+  Hs-Source-Dirs: examples/
+  Build-Depends:
+    base == 4.*,
+    fltkhs >= 0.8.0.2,
+    text >= 1.2.2.0,
+    vector,
+    array,
+    time,
+    lens,
+    Chart,
+    operational,
+    colour,
+    data-default-class,
+    Chart-fltkhs
+
+  default-language: Haskell2010
+  ghc-Options: -Werror -threaded
+  if impl(ghc >= 7.10) && impl(ghc < 8.0) && flag(FastCompile)
+     ghc-Options: -fno-specialise -fmax-simplifier-iterations=0 -fsimplifier-phases=0
+  else
+     ghc-Options: -O2
+  if os(windows)
+   ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
+  if os(darwin)
+   ghc-Options: "-optl-Wl,-lfltkc"
+  if !os(darwin) && !os(windows)
+   ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
+
+
+Executable Example4
+  Main-Is: Example4.hs
+
+  Hs-Source-Dirs: examples/
+  Build-Depends:
+    base == 4.*,
+    fltkhs >= 0.8.0.2,
+    text >= 1.2.2.0,
+    vector,
+    array,
+    thyme,
+    lens,
+    Chart,
+    operational,
+    colour,
+    data-default-class,
+    Chart-fltkhs,
+    random
+
+  default-language: Haskell2010
+  ghc-Options: -Werror -threaded
+  if impl(ghc >= 7.10) && impl(ghc < 8.0) && flag(FastCompile)
+     ghc-Options: -fno-specialise -fmax-simplifier-iterations=0 -fsimplifier-phases=0
+  else
+     ghc-Options: -O2
+  if os(windows)
+   ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
+  if os(darwin)
+   ghc-Options: "-optl-Wl,-lfltkc"
+  if !os(darwin) && !os(windows)
+   ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
+
+
+
+
+
+
+Executable Example5
+  Main-Is: Example5.hs
+  other-modules: Prices
+  Hs-Source-Dirs: examples/
+  Build-Depends:
+    base == 4.*,
+    fltkhs >= 0.8.0.2,
+    text >= 1.2.2.0,
+    vector,
+    array,
+    time,
+    lens,
+    Chart,
+    operational,
+    colour,
+    data-default-class,
+    Chart-fltkhs
+
+  default-language: Haskell2010
+  ghc-Options: -Werror -threaded
+  if impl(ghc >= 7.10) && impl(ghc < 8.0) && flag(FastCompile)
+     ghc-Options: -fno-specialise -fmax-simplifier-iterations=0 -fsimplifier-phases=0
+  else
+     ghc-Options: -O2
+  if os(windows)
+   ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
+  if os(darwin)
+   ghc-Options: "-optl-Wl,-lfltkc"
+  if !os(darwin) && !os(windows)
+   ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
+
+
+
+Executable Example7
+  Main-Is: Example7.hs
+
+  Hs-Source-Dirs: examples/
+  Build-Depends:
+    base == 4.*,
+    fltkhs >= 0.8.0.2,
+    text >= 1.2.2.0,
+    vector,
+    array,
+    thyme,
+    lens,
+    Chart,
+    operational,
+    colour,
+    data-default-class,
+    Chart-fltkhs,
+    random
+
+  default-language: Haskell2010
+  ghc-Options: -Werror -threaded
+  if impl(ghc >= 7.10) && impl(ghc < 8.0) && flag(FastCompile)
+     ghc-Options: -fno-specialise -fmax-simplifier-iterations=0 -fsimplifier-phases=0
+  else
+     ghc-Options: -O2
+  if os(windows)
+   ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
+  if os(darwin)
+   ghc-Options: "-optl-Wl,-lfltkc"
+  if !os(darwin) && !os(windows)
+   ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
+
+
+Executable Example8
+  Main-Is: Example8.hs
+  other-modules: Prices
+  Hs-Source-Dirs: examples/
+  Build-Depends:
+    base == 4.*,
+    fltkhs >= 0.8.0.2,
+    text >= 1.2.2.0,
+    vector,
+    array,
+    time,
+    lens,
+    Chart,
+    operational,
+    colour,
+    data-default-class,
+    Chart-fltkhs,
+    random
+
+  default-language: Haskell2010
+  ghc-Options: -Werror -threaded
+  if impl(ghc >= 7.10) && impl(ghc < 8.0) && flag(FastCompile)
+     ghc-Options: -fno-specialise -fmax-simplifier-iterations=0 -fsimplifier-phases=0
+  else
+     ghc-Options: -O2
+  if os(windows)
+   ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
+  if os(darwin)
+   ghc-Options: "-optl-Wl,-lfltkc"
+  if !os(darwin) && !os(windows)
+   ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
+
+
+
+Executable Example11
+  Main-Is: Example11.hs
+  Hs-Source-Dirs: examples/
+  Build-Depends:
+    base == 4.*,
+    fltkhs >= 0.8.0.2,
+    text >= 1.2.2.0,
+    vector,
+    array,
+    time,
+    lens,
+    Chart,
+    operational,
+    colour,
+    data-default-class,
+    Chart-fltkhs
+
+  default-language: Haskell2010
+  ghc-Options: -Werror -threaded
+  if impl(ghc >= 7.10) && impl(ghc < 8.0) && flag(FastCompile)
+     ghc-Options: -fno-specialise -fmax-simplifier-iterations=0 -fsimplifier-phases=0
+  else
+     ghc-Options: -O2
+  if os(windows)
+   ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
+  if os(darwin)
+   ghc-Options: "-optl-Wl,-lfltkc"
+  if !os(darwin) && !os(windows)
+   ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
+
+
+
+Executable Example12
+  Main-Is: Example12.hs
+  Hs-Source-Dirs: examples/
+  Build-Depends:
+    base == 4.*,
+    fltkhs >= 0.8.0.2,
+    text >= 1.2.2.0,
+    vector,
+    array,
+    time,
+    lens,
+    Chart,
+    operational,
+    colour,
+    data-default-class,
+    Chart-fltkhs
+
+  default-language: Haskell2010
+  ghc-Options: -Werror -threaded
+  if impl(ghc >= 7.10) && impl(ghc < 8.0) && flag(FastCompile)
+     ghc-Options: -fno-specialise -fmax-simplifier-iterations=0 -fsimplifier-phases=0
+  else
+     ghc-Options: -O2
+  if os(windows)
+   ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
+  if os(darwin)
+   ghc-Options: "-optl-Wl,-lfltkc"
+  if !os(darwin) && !os(windows)
+   ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
+
+
+
+Executable Example13
+  Main-Is: Example13.hs
+  Hs-Source-Dirs: examples/
+  Build-Depends:
+    base == 4.*,
+    fltkhs >= 0.8.0.2,
+    text >= 1.2.2.0,
+    vector,
+    array,
+    time,
+    lens,
+    Chart,
+    operational,
+    colour,
+    data-default-class,
+    Chart-fltkhs
+
+  default-language: Haskell2010
+  ghc-Options: -Werror -threaded
+  if impl(ghc >= 7.10) && impl(ghc < 8.0) && flag(FastCompile)
+     ghc-Options: -fno-specialise -fmax-simplifier-iterations=0 -fsimplifier-phases=0
+  else
+     ghc-Options: -O2
+  if os(windows)
+   ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
+  if os(darwin)
+   ghc-Options: "-optl-Wl,-lfltkc"
+  if !os(darwin) && !os(windows)
+   ghc-Options: -pgml g++ "-optl-Wl,--allow-multiple-definition" "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc" "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"

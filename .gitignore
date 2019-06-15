@@ -20,3 +20,6 @@ cabal.project.local
 cabal.project.local~
 .HTF/
 .ghc.environment.*
+.vscode/ipch/37f23d008865abc1/rotated_text.ipch
+.vscode/ipch/37f23d008865abc1/mmap_address.bin
+stack.yaml.lock

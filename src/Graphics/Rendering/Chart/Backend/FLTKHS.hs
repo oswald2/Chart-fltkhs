@@ -58,6 +58,7 @@ data FLTKHSEnv = FLTKHSEnv {
     , flFontColor :: Color
     , flPathColor :: Color
     , flFillColor :: Color
+    , flCurrentMatrix :: Matrix
     }
 
 
@@ -67,9 +68,10 @@ defaultEnv alignFns = FLTKHSEnv {
     , flFontColor = blackColor
     , flPathColor = blackColor
     , flFillColor = whiteColor
+    , flCurrentMatrix = Matrix 1.0 0.0 0.0 1.0 0.0 0.0
 }
 
-
+{-# INLINABLE renderToWidget #-}
 renderToWidget :: Ref Widget -> Renderable a -> IO (PickFn a)
 renderToWidget widget r = do
     rectangle' <- getRectangle widget
@@ -77,10 +79,12 @@ renderToWidget widget r = do
         cr = render r (fromIntegral w', fromIntegral h')
     runBackend (defaultEnv bitmapAlignmentFns) cr
 
+{-# INLINABLE renderToWidgetEC #-}
 renderToWidgetEC :: (Default r, ToRenderable r) => Ref Widget -> EC r () -> IO ()
 renderToWidgetEC widget ec = void $ renderToWidget widget (toRenderable (execEC ec))
 
 
+{-# INLINABLE runBackend #-}
 runBackend :: FLTKHSEnv -> BackendProgram a -> IO a
 runBackend env m = eval env (view m)
     where
@@ -102,6 +106,7 @@ runBackend env m = eval env (view m)
 
 
 
+{-# INLINABLE withColor #-}
 withColor :: IO a -> IO a
 withColor action = do
     col <- flcColor
@@ -109,7 +114,7 @@ withColor action = do
     flcSetColor col
     pure a
 
-
+{-# INLINABLE isClosed #-}
 isClosed :: Path -> Bool
 isClosed G.Close = True
 isClosed End = False
@@ -119,12 +124,15 @@ isClosed (Arc _ _ _ _ p) = isClosed p
 isClosed (ArcNeg _ _ _ _ p) = isClosed p
 
 
+{-# INLINABLE radToDegree #-}
 radToDegree :: Double -> Double
 radToDegree !theta = theta * 180 / pi
 
+{-# INLINABLE pointToPrecisePosition #-}
 pointToPrecisePosition :: Point -> PrecisePosition
 pointToPrecisePosition p = PrecisePosition (PreciseX (p_x p)) (PreciseY (p_y p))
 
+{-# INLINABLE pointToPosition #-}
 pointToPosition :: Point -> Position
 pointToPosition p = Position (X x) (Y y)
     where
@@ -135,10 +143,15 @@ pointToPosition p = Position (X x) (Y y)
 instance Show Path where
     show (MoveTo p path) = "MoveTo " <> show p <> " " <> show path
     show (LineTo p path) = "LineTo " <> show p <> " " <> show path
-    show (Arc p rad a1 a2 path) = "Arc " <> show p <> " " <> show rad <> " " <> show a1 <> " " <> show a2 <> show path
-    show (ArcNeg p rad a1 a2 path) = "ArcNeg " <> show p <> " " <> show rad <> " " <> show a1 <> " " <> show a2 <> show path
+    show (Arc p rad a1 a2 path) = "Arc " <> show p <> " " <> show rad <> " " <> show a1 <> " " <> show a2 <> " " <> show path
+    show (ArcNeg p rad a1 a2 path) = "ArcNeg " <> show p <> " " <> show rad <> " " <> show a1 <> " " <> show a2 <> " " <> show path
     show End = "End"
     show G.Close = "Close"
+
+
+{-# INLINABLE checkDouble #-}
+checkDouble :: Double -> Double
+checkDouble d = if isNaN d then 0 else d
 
 
 flStrokePath :: FLTKHSEnv -> Path -> IO ()
@@ -170,14 +183,14 @@ flStrokePath env p = do
                 (PreciseY (p_y p)))
             go path closed
         go (Arc p r a1 a2 path) closed = do
-            flcArcByRadius pt r a1t a2t
+            flcArcByRadius pt (checkDouble r) a1t a2t
             go path closed
             where
                 pt = pointToPrecisePosition p
                 !a1t = PreciseAngle (360 - radToDegree a1)
                 !a2t = PreciseAngle (360 - radToDegree a2)
         go (ArcNeg p r a1 a2 path) closed = do
-            flcArcByRadius pt r a1t a2t
+            flcArcByRadius pt (checkDouble r) a1t a2t
             go path closed
             where
                 pt = pointToPrecisePosition p
@@ -214,14 +227,14 @@ flFillPath env p = do
                 (PreciseY (p_y p)))
             go path
         go (Arc p r a1 a2 path) = do
-            flcArcByRadius pt r a1t a2t
+            flcArcByRadius pt (checkDouble r) a1t a2t
             go path
             where
                 pt = pointToPrecisePosition p
                 !a1t = PreciseAngle (360 - radToDegree a1)
                 !a2t = PreciseAngle (360 - radToDegree a2)
         go (ArcNeg p r a1 a2 path) = do
-            flcArcByRadius pt r a1t a2t
+            flcArcByRadius pt (checkDouble r) a1t a2t
             go path
             where
                 pt = pointToPrecisePosition p
@@ -244,14 +257,24 @@ flTextSize text = do
         , textSizeAscent = fromIntegral (h - descent)
         , textSizeYBearing = 0
         }
-    putStrLn $ "TextSize: " <> show res <> "\n\n"
+    putStrLn $ "TextSize: " <> show res <> " " <> text <> "\n\n"
     pure res
 
+{-# INLINABLE apply #-}
+apply :: Matrix -> Point -> Point
+apply (Matrix a1 a2 b1 b2 c1 c2) (Point x y) =
+    let new_x = a1 * x + b1 * y + c1
+        new_y = a2 * x + b2 * y + c2
+    in Point new_x new_y
+
+
+{-# INLINABLE flDrawText #-}
 flDrawText :: FLTKHSEnv -> Point -> String -> IO ()
 flDrawText env p text = withColor $ do
-    putStrLn $ "DrawText: " <> show p <> " " <> text <> "\n\n"
+    putStrLn $ "DrawText: " <> show p <> " " <> text
+    putStrLn $ "Current Matrix: " <> show (flCurrentMatrix env) <> "\n\n"
     flcSetColor (flFontColor env)
-    flcDraw (T.pack text) (pointToPosition p)
+    flcDraw (T.pack text) (pointToPosition (apply (flCurrentMatrix env) p))
 
 
 
@@ -264,6 +287,7 @@ withSavedLineStyle action = do
     flcSetColor col
     return a
 
+{-# INLINABLE clampI #-}
 clampI :: Int -> Int
 clampI x | x < 0 = 0
     | x > 255 = 255
@@ -298,6 +322,7 @@ flWithFillStyle env fs p = do
     runBackend env {flFillColor = convColor (_fill_color fs)} p
 
 
+{-# INLINABLE withFlClip #-}
 withFlClip :: FL.Rectangle -> IO a -> IO a
 withFlClip rect action = do
     flcPushClip rect
@@ -321,6 +346,7 @@ flWithClipRegion env (Rect (Point x1 y1) (Point x2 y2)) p = do
     withFlClip rect (runBackend env p)
 
 
+{-# INLINABLE withMatrix #-}
 withMatrix :: IO a -> IO a
 withMatrix action = do
     flcPushMatrix
@@ -335,9 +361,10 @@ flWithTransform env mat@(Matrix xx yx xy yy x0 y0) p = withMatrix $ do
     putStrLn $ "WithTransform: " <> show mat <> "\n\n"
 
     flcMultMatrix xx yx xy yy (ByXY (ByX x0) (ByY y0))
-    runBackend env p
+    runBackend env {flCurrentMatrix = flCurrentMatrix env * mat} p
 
 
+{-# INLINABLE withFlFont #-}
 withFlFont :: IO a -> IO a
 withFlFont action = do
     font <- flcFont
@@ -358,6 +385,7 @@ flWithFontStyle env font p = withFlFont $ do
     runBackend env {flFontColor = convColor (_font_color font)} p
 
 
+{-# INLINABLE selectFont #-}
 selectFont :: FontStyle -> Font
 selectFont fs =
     case (_font_name fs, _font_slant fs, _font_weight fs) of
@@ -392,21 +420,25 @@ selectFont fs =
 
 
 
+{-# INLINABLE convCapStyle #-}
 convCapStyle :: LineCap -> CapStyle
 convCapStyle LineCapButt = CapStyleFlat
 convCapStyle LineCapRound = CapStyleRound
 convCapStyle LineCapSquare = CapStyleSquare
 
+{-# INLINABLE convJoinStyle #-}
 convJoinStyle :: LineJoin -> JoinStyle
 convJoinStyle LineJoinMiter = JoinStyleMiter
 convJoinStyle LineJoinRound = JoinStyleRound
 convJoinStyle LineJoinBevel = JoinStyleBevel
 
+{-# INLINABLE pureColour #-}
 pureColour :: AlphaColour Double -> Colour Double
 pureColour ac = darken (recip a) (ac `over` black)
     where
         a = alphaChannel ac
 
+{-# INLINABLE convColor #-}
 convColor :: AlphaColour Double -> Color
 convColor color =
     let (RGB r g b) = toSRGB24 (pureColour color)
