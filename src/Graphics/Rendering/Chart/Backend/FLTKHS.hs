@@ -156,9 +156,6 @@ checkDouble d = if isNaN d then 0 else d
 
 flStrokePath :: FLTKHSEnv -> Path -> IO ()
 flStrokePath env p = do
-
-    putStrLn $ "StrokePath: " <> show p <> "\n\n"
-
     withColor $ do
         flcSetColor (flPathColor env)
         let closed = isClosed p
@@ -209,9 +206,6 @@ flStrokePath env p = do
 
 flFillPath :: FLTKHSEnv -> Path -> IO ()
 flFillPath env p = do
-
-    putStrLn $ "FillPath: " <> show p <> "\n\n"
-
     withColor $ do
         flcSetColor (flFillColor env)
         flcBeginComplexPolygon
@@ -257,7 +251,6 @@ flTextSize text = do
         , textSizeAscent = fromIntegral (h - descent)
         , textSizeYBearing = 0
         }
-    putStrLn $ "TextSize: " <> show res <> " " <> text <> "\n\n"
     pure res
 
 {-# INLINABLE apply #-}
@@ -271,8 +264,6 @@ apply (Matrix a1 a2 b1 b2 c1 c2) (Point x y) =
 {-# INLINABLE flDrawText #-}
 flDrawText :: FLTKHSEnv -> Point -> String -> IO ()
 flDrawText env p text = withColor $ do
-    putStrLn $ "DrawText: " <> show p <> " " <> text
-    putStrLn $ "Current Matrix: " <> show (flCurrentMatrix env) <> "\n\n"
     flcSetColor (flFontColor env)
     flcDraw (T.pack text) (pointToPosition (apply (flCurrentMatrix env) p))
 
@@ -295,9 +286,6 @@ clampI x | x < 0 = 0
 
 flWithLineStyle :: FLTKHSEnv -> G.LineStyle -> BackendProgram a -> IO a
 flWithLineStyle env ls p = do
-
-    putStrLn $ "WithLineStyle: " <> show ls <> "\n\n"
-
     withSavedLineStyle $ do
         let width = Prelude.round (_line_width ls)
             capStyle = convCapStyle (_line_cap ls)
@@ -315,11 +303,7 @@ flWithLineStyle env ls p = do
         runBackend env {flPathColor = col} p
 
 flWithFillStyle :: FLTKHSEnv -> FillStyle -> BackendProgram a -> IO a
-flWithFillStyle env fs p = do
-
-    putStrLn $ "WithFillStyle: " <> show fs <> "\n\n"
-
-    runBackend env {flFillColor = convColor (_fill_color fs)} p
+flWithFillStyle env fs p = runBackend env {flFillColor = convColor (_fill_color fs)} p
 
 
 {-# INLINABLE withFlClip #-}
@@ -332,8 +316,12 @@ withFlClip rect action = do
 
 
 flWithClipRegion :: FLTKHSEnv -> Rect -> BackendProgram a -> IO a
-flWithClipRegion env (Rect (Point x1 y1) (Point x2 y2)) p = do
-    let rect = FL.Rectangle (Position
+flWithClipRegion env r@(Rect p1@(Point x1' y1') p2@(Point x2' y2')) p = do
+    let mat = flCurrentMatrix env
+        Point x1 y1 = apply mat p1
+        Point x2 y2 = apply mat p2 
+
+        rect = FL.Rectangle (Position
             (X (Prelude.round minx)) (Y (Prelude.round miny)))
             (Size (Width (Prelude.round w)) (Height (Prelude.round h)))
         minx = min x1 x2
@@ -342,7 +330,6 @@ flWithClipRegion env (Rect (Point x1 y1) (Point x2 y2)) p = do
         maxy = max y1 y2
         w = maxx - minx
         h = maxy - miny
-
     withFlClip rect (runBackend env p)
 
 
@@ -357,9 +344,6 @@ withMatrix action = do
 
 flWithTransform :: FLTKHSEnv -> Matrix -> BackendProgram a -> IO a
 flWithTransform env mat@(Matrix xx yx xy yy x0 y0) p = withMatrix $ do
-
-    putStrLn $ "WithTransform: " <> show mat <> "\n\n"
-
     flcMultMatrix xx yx xy yy (ByXY (ByX x0) (ByY y0))
     runBackend env {flCurrentMatrix = flCurrentMatrix env * mat} p
 
@@ -376,9 +360,6 @@ withFlFont action = do
 
 flWithFontStyle :: FLTKHSEnv -> FontStyle -> BackendProgram a -> IO a
 flWithFontStyle env font p = withFlFont $ do
-
-    putStrLn $ "WithFontStyle: " <> show font <> "\n\n"
-
     let fontSize = FontSize (Prelude.round (_font_size font))
         flfont = selectFont font
     flcSetFont flfont fontSize

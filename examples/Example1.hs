@@ -53,8 +53,8 @@ chart = toRenderable layout
 
 
 
-drawScene :: SceneStateRef -> Ref Widget -> IO ()
-drawScene ref widget = do
+drawScene :: Ref Widget -> IO ()
+drawScene widget = do
     rectangle' <- getRectangle widget
     let coords@(x', y', w', h') = fromRectangle rectangle'
     withFlClip rectangle' $
@@ -69,27 +69,10 @@ drawScene ref widget = do
             plot (points "am points" (signal [0,7..400]))
 
 
-
-
-
-data SceneState = SceneState {
-    scWidth :: Width
-    , scHeight :: Height
-    , scTheta :: Double
-    }
-
-
-type SceneStateRef = IORef SceneState
-
-
 main :: IO ()
 main = do
     let width  = 800
         height = 600
-        fAspectRatio :: Double
-        fAspectRatio = fromIntegral height / fromIntegral width
-
-    ref     <- newIORef (SceneState (Width width) (Height height) 0.0)
 
     window' <- doubleWindowNew (Size (Width width) (Height height))
                                Nothing
@@ -98,7 +81,7 @@ main = do
     widget' <- widgetCustom
         (FL.Rectangle (Position (X 0) (Y 0)) (Size (Width width) (Height height)))
         Nothing
-        (drawScene ref)
+        drawScene
         defaultCustomWidgetFuncs
     end window'
     showWidget window'
