@@ -11,9 +11,9 @@ homepage:
 category: Graphics
 cabal-version: >=2.0
 
--- source-repository head
---   type: git
---   location: http://github.com/oswald2/Engine3D
+source-repository head
+  type: git
+  location: http://github.com/oswald2/Chart-fltkhs
 
 custom-setup
   setup-depends:
