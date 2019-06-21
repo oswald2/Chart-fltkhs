@@ -73,37 +73,20 @@ chart lwidth = toRenderable (layout 1001 (trial bits) :: Layout Double LogValue)
         s1 = solidLine lwidth $ opaque green
         s2 = solidLine lwidth $ opaque blue
 
-drawScene :: SceneStateRef -> Ref Widget -> IO ()
-drawScene ref widget = do
+drawChart :: Ref Widget -> IO ()
+drawChart widget = do
     rectangle' <- getRectangle widget
-    let coords@(x', y', w', h') = fromRectangle rectangle'
-    withFlClip rectangle' $ do
+    withFlClip rectangle' $
           renderToWidgetEC widget $ do
             layout_title .= "Simulation of betting on a biased coin"
             plot (line "f=0.05" [vals 0.05 ])
             plot (line "f=0.1" [vals 0.1])
 
 
-
-
-data SceneState = SceneState {
-    scWidth :: Width
-    , scHeight :: Height
-    , scTheta :: Double
-    }
-
-
-type SceneStateRef = IORef SceneState
-
-
 main :: IO ()
 main = do
     let width  = 800
         height = 600
-        fAspectRatio :: Double
-        fAspectRatio = fromIntegral height / fromIntegral width
-
-    ref     <- newIORef (SceneState (Width width) (Height height) 0.0)
 
     window' <- doubleWindowNew (Size (Width width) (Height height))
                                Nothing
@@ -114,7 +97,7 @@ main = do
                       (Size (Width width) (Height height))
         )
         Nothing
-        (drawScene ref)
+        drawChart
         defaultCustomWidgetFuncs
     end window'
     showWidget window'

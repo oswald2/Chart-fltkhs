@@ -3,6 +3,7 @@ module Prices where
 import Data.Time.Calendar
 import Data.Time.LocalTime
 
+rawPrices :: [(Int, Int, Integer, Double, Double)]
 rawPrices = [
         (03,05,2005, 16.18, 42.02),
         (04,05,2005, 16.25, 42.31),
@@ -297,6 +298,7 @@ rawPrices = [
         (31,03,2007, 28.00, 78.85)
         ]
 
+rawHourly :: [(Int, Int, Integer, Rational, Double, Double)]
 rawHourly = [
         (03,05,2005,00, 16.18, 42.02),
         (03,05,2005,01, 16.25, 42.31),
@@ -354,6 +356,7 @@ secondPrices :: [(LocalTime,Double,Double)]
 secondPrices = [ (mkSeconds ss, p1, p2)
                 | (ss,(_,_,_,p1,p2)) <- zip [0..] rawPrices ]
 
+filterPrices :: Ord a => [(a, b, c)] -> a -> a -> [(a, b, c)]
 filterPrices prices t1 t2 = [ v | v@(d,_,_) <- prices
                                 , let t = d in t >= t1 && t <= t2]
 

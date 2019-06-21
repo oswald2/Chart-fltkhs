@@ -1,8 +1,52 @@
+{-|
+Module      : Graphics.Rendering.Chart.Backend.FLTKHS
+Description : Provides a backend for the Chart library using a FLTKHS widget for rendering
+Copyright   : (c) Michael Oswald, 2019
+License     : BSD-3
+Maintainer  : michael.oswald@onikudaki.net
+Stability   : experimental
+Portability : POSIX
+
+To render a Chart to a widget, it is best to create a custom widget and override it's draw method.
+
+An example:
+
+@
+widget' <- widgetCustom
+    (FL.Rectangle (Position (X 0) (Y 0)) (Size (Width width) (Height height)))
+    Nothing
+    drawChart
+    defaultCustomWidgetFuncs
+@
+
+Here, 'drawChart' is the provided draw method for the widget. A possible implementation
+could be this:
+
+@
+-- The char itself, to be used here with 'Graphics.Rendering.Chart.Easy'
+signal :: [Double] -> [(Double,Double)]
+signal xs = [ (x,(sin (x*3.14159/45) + 1) / 2 * sin (x*3.14159/5)) | x <- xs ]
+
+-- the overloaded drawing function
+drawChart :: Ref Widget -> IO ()
+drawChart widget = do
+    -- determine a clipping area for the whole widget first
+    rectangle' <- getRectangle widget
+
+    -- with this clipping area, we draw the graph. This graph is taken from Example1
+    -- from the Chart library
+    withFlClip rectangle' $
+        renderToWidgetEC widget $ do
+            layout_title .= "Amplitude Modulation"
+            setColors [opaque blue, opaque red]
+            plot (line "am" [signal [0,(0.5)..400]])
+            plot (points "am points" (signal [0,7..400]))
+@
+
+
+-}
 {-# LANGUAGE OverloadedStrings
     , BangPatterns
-    , GeneralizedNewtypeDeriving
-    , DeriveGeneric
-    , RecordWildCards
     , BinaryLiterals
     , NumericUnderscores
     , FlexibleInstances
@@ -17,17 +61,9 @@ module Graphics.Rendering.Chart.Backend.FLTKHS
     , FLTKHSEnv
     , defaultEnv
     , withFlClip
-
-
-    , flStrokePath
-    , flFillPath
-    , flTextSize
-    , flDrawText
-    , flWithFontStyle
 )
 where
 
-import Control.Monad.IO.Class
 import Control.Monad.Operational
 import Control.Monad (void)
 
@@ -38,21 +74,18 @@ import Data.Colour.SRGB
 import Data.Bits
 import Data.Default.Class
 
-import qualified Graphics.UI.FLTK.LowLevel.FL  as FL
 import           Graphics.UI.FLTK.LowLevel.Fl_Types
 import           Graphics.UI.FLTK.LowLevel.FLTKHS as FL
 import           Graphics.UI.FLTK.LowLevel.Fl_Enumerations
 
 import Graphics.Rendering.Chart.Backend as G
 import Graphics.Rendering.Chart.Backend.Impl
-import Graphics.Rendering.Chart.Backend.Types
-import Graphics.Rendering.Chart.Drawing as G
 import Graphics.Rendering.Chart.Geometry as G
 import Graphics.Rendering.Chart.Renderable
-import Graphics.Rendering.Chart.SparkLine
 import Graphics.Rendering.Chart.State(EC, execEC)
 
 
+-- | The environment internally used for drawing
 data FLTKHSEnv = FLTKHSEnv {
     flAlignmentFns :: AlignmentFns
     , flFontColor :: Color
@@ -61,7 +94,8 @@ data FLTKHSEnv = FLTKHSEnv {
     , flCurrentMatrix :: Matrix
     }
 
-
+-- | Provide a default environment. The 'AlignmentFns' used should be 'bitmapAlignmentFns'
+-- from the Chart library
 defaultEnv :: AlignmentFns -> FLTKHSEnv
 defaultEnv alignFns = FLTKHSEnv {
     flAlignmentFns = alignFns
@@ -71,25 +105,31 @@ defaultEnv alignFns = FLTKHSEnv {
     , flCurrentMatrix = Matrix 1.0 0.0 0.0 1.0 0.0 0.0
 }
 
+
+-- | Render a 'Renderable' to a widget. It renders to the full widget (it gets the rectangle
+-- of the widgets area) and uses that as the sizes for rendering.
 {-# INLINABLE renderToWidget #-}
 renderToWidget :: Ref Widget -> Renderable a -> IO (PickFn a)
 renderToWidget widget r = do
     rectangle' <- getRectangle widget
-    let coords@(x', y', w', h') = fromRectangle rectangle'
+    let (_, _, w', h') = fromRectangle rectangle'
         cr = render r (fromIntegral w', fromIntegral h')
     runBackend (defaultEnv bitmapAlignmentFns) cr
 
+
+-- | Render a Chart created with the statefull 'Graphics.Rendering.Chart.Easy' API.
+-- Calls 'renderToWidget' internally
 {-# INLINABLE renderToWidgetEC #-}
 renderToWidgetEC :: (Default r, ToRenderable r) => Ref Widget -> EC r () -> IO ()
 renderToWidgetEC widget ec = void $ renderToWidget widget (toRenderable (execEC ec))
 
-
+-- | Run this backends renderer
 {-# INLINABLE runBackend #-}
 runBackend :: FLTKHSEnv -> BackendProgram a -> IO a
-runBackend env m = eval env (view m)
+runBackend env' m' = eval env' (view m')
     where
         eval :: FLTKHSEnv -> ProgramView ChartBackendInstr a -> IO a
-        eval env (Return v) = return v
+        eval _ (Return v) = return v
         eval env (StrokePath p :>>= f) = flStrokePath env p >>= step env f
         eval env (FillPath p :>>= f) = flFillPath env p >>= step env f
         eval env (GetTextSize s :>>= f) = flTextSize s >>= step env f
@@ -140,13 +180,13 @@ pointToPosition p = Position (X x) (Y y)
         y = Prelude.round (p_y p)
 
 
-instance Show Path where
-    show (MoveTo p path) = "MoveTo " <> show p <> " " <> show path
-    show (LineTo p path) = "LineTo " <> show p <> " " <> show path
-    show (Arc p rad a1 a2 path) = "Arc " <> show p <> " " <> show rad <> " " <> show a1 <> " " <> show a2 <> " " <> show path
-    show (ArcNeg p rad a1 a2 path) = "ArcNeg " <> show p <> " " <> show rad <> " " <> show a1 <> " " <> show a2 <> " " <> show path
-    show End = "End"
-    show G.Close = "Close"
+-- instance Show Path where
+--     show (MoveTo p path) = "MoveTo " <> show p <> " " <> show path
+--     show (LineTo p path) = "LineTo " <> show p <> " " <> show path
+--     show (Arc p rad a1 a2 path) = "Arc " <> show p <> " " <> show rad <> " " <> show a1 <> " " <> show a2 <> " " <> show path
+--     show (ArcNeg p rad a1 a2 path) = "ArcNeg " <> show p <> " " <> show rad <> " " <> show a1 <> " " <> show a2 <> " " <> show path
+--     show End = "End"
+--     show G.Close = "Close"
 
 
 {-# INLINABLE checkDouble #-}
@@ -155,14 +195,14 @@ checkDouble d = if isNaN d then 0 else d
 
 
 flStrokePath :: FLTKHSEnv -> Path -> IO ()
-flStrokePath env p = do
+flStrokePath env p' =
     withColor $ do
         flcSetColor (flPathColor env)
-        let closed = isClosed p
+        let closed = isClosed p'
         if closed
             then flcBeginLoop
             else flcBeginLine
-        go p closed
+        go p' closed
     where
         go (MoveTo p path) closed = do
             if closed
@@ -205,11 +245,11 @@ flStrokePath env p = do
 
 
 flFillPath :: FLTKHSEnv -> Path -> IO ()
-flFillPath env p = do
+flFillPath env p' =
     withColor $ do
         flcSetColor (flFillColor env)
         flcBeginComplexPolygon
-        go p
+        go p'
     where
         go (MoveTo p path) = do
             flcGap
@@ -242,7 +282,7 @@ flFillPath env p = do
 
 flTextSize :: String -> IO TextSize
 flTextSize text = do
-    FL.Rectangle (Position (X x) (Y y)) (Size (Width w) (Height h)) <- flcTextExtents (T.pack text)
+    FL.Rectangle (Position _ _) (Size (Width w) (Height h)) <- flcTextExtents (T.pack text)
     descent <- flcDescent
     let res = TextSize {
         textSizeWidth = fromIntegral w
@@ -285,7 +325,7 @@ clampI x | x < 0 = 0
     | otherwise = x
 
 flWithLineStyle :: FLTKHSEnv -> G.LineStyle -> BackendProgram a -> IO a
-flWithLineStyle env ls p = do
+flWithLineStyle env ls p =
     withSavedLineStyle $ do
         let width = Prelude.round (_line_width ls)
             capStyle = convCapStyle (_line_cap ls)
@@ -303,9 +343,12 @@ flWithLineStyle env ls p = do
         runBackend env {flPathColor = col} p
 
 flWithFillStyle :: FLTKHSEnv -> FillStyle -> BackendProgram a -> IO a
-flWithFillStyle env fs p = runBackend env {flFillColor = convColor (_fill_color fs)} p
+flWithFillStyle env fs = runBackend env {flFillColor = convColor (_fill_color fs)}
 
-
+-- | Performs a drawing action in a widget within a defined clipping rectangle. This
+-- is a convenience function, as FLTKHS is quite statefull and a 'flcPushClip' must
+-- be closed by a 'flcPopClip'. So this function exactly provides this, while
+-- executing the given drawing action in between push and pop
 {-# INLINABLE withFlClip #-}
 withFlClip :: FL.Rectangle -> IO a -> IO a
 withFlClip rect action = do
@@ -316,10 +359,10 @@ withFlClip rect action = do
 
 
 flWithClipRegion :: FLTKHSEnv -> Rect -> BackendProgram a -> IO a
-flWithClipRegion env r@(Rect p1@(Point x1' y1') p2@(Point x2' y2')) p = do
+flWithClipRegion env (Rect p1@(Point _ _) p2@(Point _ _)) p = do
     let mat = flCurrentMatrix env
         Point x1 y1 = apply mat p1
-        Point x2 y2 = apply mat p2 
+        Point x2 y2 = apply mat p2
 
         rect = FL.Rectangle (Position
             (X (Prelude.round minx)) (Y (Prelude.round miny)))
@@ -343,8 +386,8 @@ withMatrix action = do
 
 
 flWithTransform :: FLTKHSEnv -> Matrix -> BackendProgram a -> IO a
-flWithTransform env mat@(Matrix xx yx xy yy x0 y0) p = withMatrix $ do
-    flcMultMatrix xx yx xy yy (ByXY (ByX x0) (ByY y0))
+flWithTransform env mat@(Matrix xx' yx' xy' yy' x0' y0') p = withMatrix $ do
+    flcMultMatrix xx' yx' xy' yy' (ByXY (ByX x0') (ByY y0'))
     runBackend env {flCurrentMatrix = flCurrentMatrix env * mat} p
 
 
@@ -358,6 +401,8 @@ withFlFont action = do
     pure a
 
 
+
+{-# INLINABLE flWithFontStyle #-}
 flWithFontStyle :: FLTKHSEnv -> FontStyle -> BackendProgram a -> IO a
 flWithFontStyle env font p = withFlFont $ do
     let fontSize = FontSize (Prelude.round (_font_size font))
