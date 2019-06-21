@@ -50,4 +50,5 @@ drawChart widget = do
             plot (points "am points" (signal [0,7..400]))
 ```
 
+For more detailed examples, look into the [examples](https://github.com/oswald2/Chart-fltkhs/tree/master/examples) directory.
 
