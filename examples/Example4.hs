@@ -13,18 +13,11 @@ import qualified Graphics.UI.FLTK.LowLevel.FL  as FL
 import           Graphics.UI.FLTK.LowLevel.Fl_Types
 import           Graphics.UI.FLTK.LowLevel.FLTKHS
                                                as FL
-import           Graphics.UI.FLTK.LowLevel.Fl_Enumerations
-
-import           Data.Vector                    ( Vector )
-import qualified Data.Vector                   as V
-import           Data.IORef
 
 import           Control.Lens
 
 import           Graphics.Rendering.Chart.Easy as Ch
 import           Graphics.Rendering.Chart.Backend.FLTKHS
-import           Graphics.Rendering.Chart.Backend
-                                               as CB
 
 import           System.Random
 
