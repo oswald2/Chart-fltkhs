@@ -14,15 +14,10 @@ import           Graphics.UI.FLTK.LowLevel.Fl_Types
 import           Graphics.UI.FLTK.LowLevel.FLTKHS as FL
 import           Graphics.UI.FLTK.LowLevel.Fl_Enumerations
 
-import           Data.Vector                    ( Vector )
-import qualified Data.Vector                   as V
-import           Data.IORef
-
 import           Control.Lens
 
 import           Graphics.Rendering.Chart.Easy as Ch
 import           Graphics.Rendering.Chart.Backend.FLTKHS
-import           Graphics.Rendering.Chart.Backend as CB
 
 
 titles = ["Cash","Equity"]
@@ -63,10 +58,9 @@ chart borders = toRenderable layout
 
 
 
-drawScene :: SceneStateRef -> Ref Widget -> IO ()
-drawScene ref widget = do
+drawChart ::  Ref Widget -> IO ()
+drawChart widget = do
     rectangle' <- getRectangle widget
-    let coords@(x', y', w', h') = fromRectangle rectangle'
     withFlClip rectangle' $
         renderToWidgetEC widget $ do
             layout_title .= "Sample Bars"
@@ -76,24 +70,10 @@ drawScene ref widget = do
 
 
 
-data SceneState = SceneState {
-    scWidth :: Width
-    , scHeight :: Height
-    , scTheta :: Double
-    }
-
-
-type SceneStateRef = IORef SceneState
-
-
 main :: IO ()
 main = do
     let width  = 800
         height = 600
-        fAspectRatio :: Double
-        fAspectRatio = fromIntegral height / fromIntegral width
-
-    ref     <- newIORef (SceneState (Width width) (Height height) 0.0)
 
     window' <- doubleWindowNew (Size (Width width) (Height height))
                                Nothing
@@ -102,7 +82,7 @@ main = do
     widget' <- widgetCustom
         (FL.Rectangle (Position (X 0) (Y 0)) (Size (Width width) (Height height)))
         Nothing
-        (drawScene ref)
+        drawChart
         defaultCustomWidgetFuncs
     end window'
     showWidget window'

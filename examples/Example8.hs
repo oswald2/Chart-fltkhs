@@ -15,9 +15,6 @@ import           Graphics.UI.FLTK.LowLevel.FLTKHS
                                                as FL
 import           Graphics.UI.FLTK.LowLevel.Fl_Enumerations
 
-import           Data.Vector                    ( Vector )
-import qualified Data.Vector                   as V
-import           Data.IORef
 import           Data.Time.LocalTime
 import           Data.Time.Calendar
 
@@ -27,8 +24,6 @@ import           Graphics.Rendering.Chart.Layout
 import           Graphics.Rendering.Chart
 import           Graphics.Rendering.Chart.Easy as Ch
 import           Graphics.Rendering.Chart.Backend.FLTKHS
-import           Graphics.Rendering.Chart.Backend
-                                               as CB
 
 import           Prices                         ( prices1 )
 import           System.Random
@@ -45,8 +40,8 @@ values = [ (d, v, z, t) | ((d, v, _), z, t) <- zip3 prices1 zs ts ]
 
 
 
-drawScene :: SceneStateRef -> Ref Widget -> IO ()
-drawScene ref widget = do
+drawChart :: Ref Widget -> IO ()
+drawChart widget = do
     rectangle' <- getRectangle widget
     let coords@(x', y', w', h') = fromRectangle rectangle'
     withFlClip rectangle' $ do
@@ -64,24 +59,10 @@ drawScene ref widget = do
                 area_spots_4d_values .= values
 
 
-data SceneState = SceneState {
-    scWidth :: Width
-    , scHeight :: Height
-    , scTheta :: Double
-    }
-
-
-type SceneStateRef = IORef SceneState
-
-
 main :: IO ()
 main = do
     let width  = 800
         height = 600
-        fAspectRatio :: Double
-        fAspectRatio = fromIntegral height / fromIntegral width
-
-    ref     <- newIORef (SceneState (Width width) (Height height) 0.0)
 
     window' <- doubleWindowNew (Size (Width width) (Height height))
                                Nothing
@@ -92,7 +73,7 @@ main = do
                       (Size (Width width) (Height height))
         )
         Nothing
-        (drawScene ref)
+        drawChart
         defaultCustomWidgetFuncs
     end window'
     showWidget window'
