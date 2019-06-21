@@ -4,7 +4,7 @@ FLTKHS backend for the Chart Haskell library.
 
 Builds the library and (fi specified) the examples, which resemble the examples from https://github.com/timbod7/haskell-chart/wiki.
 
-Transparency is not supported by FLTK, so e.g. Examples 8, 9 and 10 from the Chart library will not look correctly. This is a limitation of FLTK itself
+Transparency is not supported by FLTK, so e.g. Examples 8, 9 and 10 from the Chart library will not look correctly. This is a limitation of FLTK itself.
 
 To render a Chart to a widget, it is best to create a custom widget and override it's draw method.
 
