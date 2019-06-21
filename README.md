@@ -16,7 +16,7 @@ Just use stack build. If you specify the flag 'examples', also the examples will
 
 To build with examples: 
 
-> stack build --flag Chart-fltksh:examples
+> stack build --flag Chart-fltkhs:examples
 
 ### A usage example: ###
 
