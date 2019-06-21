@@ -13,6 +13,9 @@ To render a Chart to a widget, it is best to create a custom widget and override
 Just use stack build. If you specify the flag 'examples', also the examples will be built:
 
 > stack build
+
+To build with examples: 
+
 > stack build --flag Chart-fltksh:examples
 
 ### A usage example: ###
