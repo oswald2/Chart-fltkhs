@@ -29,7 +29,7 @@ widget' <- widgetCustom
 ```
 
 
-Here, 'drawChart' is the provided draw method for the widget. A possible implementation
+Here, `drawChart` is the provided draw method for the widget. A possible implementation
 could be this:
 
 ```haskell
