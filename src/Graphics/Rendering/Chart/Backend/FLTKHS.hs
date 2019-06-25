@@ -66,6 +66,7 @@ where
 
 import Control.Monad.Operational
 import Control.Monad (void)
+import Control.Exception (bracket, bracket_)
 
 import qualified Data.Text as T
 import Data.Char (chr)
@@ -148,11 +149,13 @@ runBackend env' m' = eval env' (view m')
 
 {-# INLINABLE withColor #-}
 withColor :: IO a -> IO a
-withColor action = do
-    col <- flcColor
-    a <- action
-    flcSetColor col
-    pure a
+withColor action =
+    bracket
+        flcColor
+        flcSetColor
+        (const action)
+
+
 
 {-# INLINABLE isClosed #-}
 isClosed :: Path -> Bool
@@ -311,12 +314,16 @@ flDrawText env p text = withColor $ do
 
 
 withSavedLineStyle :: IO a -> IO a
-withSavedLineStyle action = do
-    col <- flcColor
-    a <- action
-    flcLineStyle (LineDrawStyle Nothing Nothing Nothing) Nothing Nothing
-    flcSetColor col
-    return a
+withSavedLineStyle action =
+    bracket
+        flcColor
+        reset
+        (const action)
+    where
+        reset col = do
+            flcLineStyle (LineDrawStyle Nothing Nothing Nothing) Nothing Nothing
+            flcSetColor col
+
 
 {-# INLINABLE clampI #-}
 clampI :: Int -> Int
@@ -351,38 +358,36 @@ flWithFillStyle env fs = runBackend env {flFillColor = convColor (_fill_color fs
 -- executing the given drawing action in between push and pop
 {-# INLINABLE withFlClip #-}
 withFlClip :: FL.Rectangle -> IO a -> IO a
-withFlClip rect action = do
-    flcPushClip rect
-    a <- action
-    flcPopClip
-    pure a
+withFlClip rect =
+    bracket_
+        (flcPushClip rect)
+        flcPopClip
 
-
+{-# INLINABLE flWithClipRegion #-}
 flWithClipRegion :: FLTKHSEnv -> Rect -> BackendProgram a -> IO a
 flWithClipRegion env (Rect p1@(Point _ _) p2@(Point _ _)) p = do
     let mat = flCurrentMatrix env
         Point x1 y1 = apply mat p1
         Point x2 y2 = apply mat p2
 
-        rect = FL.Rectangle (Position
+        !rect = FL.Rectangle (Position
             (X (Prelude.round minx)) (Y (Prelude.round miny)))
             (Size (Width (Prelude.round w)) (Height (Prelude.round h)))
-        minx = min x1 x2
-        miny = min y1 y2
-        maxx = max x1 x2
-        maxy = max y1 y2
-        w = maxx - minx
-        h = maxy - miny
+        !minx = min x1 x2
+        !miny = min y1 y2
+        !maxx = max x1 x2
+        !maxy = max y1 y2
+        !w = maxx - minx
+        !h = maxy - miny
     withFlClip rect (runBackend env p)
 
 
 {-# INLINABLE withMatrix #-}
 withMatrix :: IO a -> IO a
-withMatrix action = do
-    flcPushMatrix
-    a <- action
-    flcPopMatrix
-    pure a
+withMatrix =
+    bracket_
+        flcPushMatrix
+        flcPopMatrix
 
 
 flWithTransform :: FLTKHSEnv -> Matrix -> BackendProgram a -> IO a
@@ -393,12 +398,14 @@ flWithTransform env mat@(Matrix xx' yx' xy' yy' x0' y0') p = withMatrix $ do
 
 {-# INLINABLE withFlFont #-}
 withFlFont :: IO a -> IO a
-withFlFont action = do
-    font <- flcFont
-    size <- flcSize
-    a <- action
-    flcSetFont font size
-    pure a
+withFlFont action =
+    bracket
+        acquire
+        release
+        (const action)
+    where
+        acquire = (,) <$> flcFont <*> flcSize
+        release (font, size) = flcSetFont font size
 
 
 
@@ -468,7 +475,7 @@ pureColour ac = darken (recip a) (ac `over` black)
 convColor :: AlphaColour Double -> Color
 convColor color =
     let (RGB r g b) = toSRGB24 (pureColour color)
-        col = Color (fromIntegral r `shiftL` 24
+        !col = Color (fromIntegral r `shiftL` 24
                 .|. fromIntegral g `shiftL` 16
                 .|. fromIntegral b `shiftL` 8)
     in
