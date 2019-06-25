@@ -1,7 +1,7 @@
-cabal-version: >=2.0
+cabal-version: 2.4
 name: Chart-fltkhs
 version: 0.1.0.0
-license: BSD3
+license: BSD-3-Clause
 license-file: LICENSE
 maintainer: michael.oswald@onikudaki.net
 author: Michael Oswald
@@ -54,7 +54,7 @@ library
         ghc-options: -fno-specialise -fmax-simplifier-iterations=0
                      -fsimplifier-phases=0
     else
-        ghc-options: -O -Wall -Wcompat -Widentities
+        ghc-options:  -Wall -Wcompat -Widentities
                      -Wincomplete-record-updates -Wincomplete-uni-patterns
                      -Wredundant-constraints -Wpartial-fields -funbox-strict-fields
 
@@ -97,7 +97,7 @@ executable Example1
         ghc-options: -fno-specialise -fmax-simplifier-iterations=0
                     -fsimplifier-phases=0
     else
-        ghc-options: -O
+        ghc-options:
 
     if os(windows)
         ghc-options: -pgml g++ "-optl-Wl,--allow-multiple-definition"
@@ -142,7 +142,7 @@ executable Example2
         ghc-options: -fno-specialise -fmax-simplifier-iterations=0
                      -fsimplifier-phases=0
     else
-        ghc-options: -O
+        ghc-options:
 
     if os(windows)
         ghc-options: -pgml g++ "-optl-Wl,--allow-multiple-definition"
@@ -185,7 +185,7 @@ executable Example3
         ghc-options: -fno-specialise -fmax-simplifier-iterations=0
                      -fsimplifier-phases=0
     else
-        ghc-options: -O
+        ghc-options:
 
     if os(windows)
         ghc-options: -pgml g++ "-optl-Wl,--allow-multiple-definition"
@@ -226,7 +226,7 @@ executable Example4
         ghc-options: -fno-specialise -fmax-simplifier-iterations=0
                      -fsimplifier-phases=0
     else
-        ghc-options: -O
+        ghc-options:
 
     if os(windows)
         ghc-options: -pgml g++ "-optl-Wl,--allow-multiple-definition"
@@ -269,7 +269,7 @@ executable Example5
         ghc-options: -fno-specialise -fmax-simplifier-iterations=0
                      -fsimplifier-phases=0
     else
-        ghc-options: -O
+        ghc-options:
 
     if os(windows)
         ghc-options: -pgml g++ "-optl-Wl,--allow-multiple-definition"
@@ -310,7 +310,7 @@ executable Example7
         ghc-options: -fno-specialise -fmax-simplifier-iterations=0
                      -fsimplifier-phases=0
     else
-        ghc-options: -O
+        ghc-options:
 
     if os(windows)
         ghc-options: -pgml g++ "-optl-Wl,--allow-multiple-definition"
@@ -354,7 +354,7 @@ executable Example8
         ghc-options: -fno-specialise -fmax-simplifier-iterations=0
                      -fsimplifier-phases=0
     else
-        ghc-options: -O
+        ghc-options:
 
     if os(windows)
         ghc-options: -pgml g++ "-optl-Wl,--allow-multiple-definition"
@@ -395,7 +395,7 @@ executable Example11
         ghc-options: -fno-specialise -fmax-simplifier-iterations=0
                      -fsimplifier-phases=0
     else
-        ghc-options: -O
+        ghc-options:
 
     if os(windows)
         ghc-options: -pgml g++ "-optl-Wl,--allow-multiple-definition"
@@ -436,7 +436,7 @@ executable Example12
         ghc-options: -fno-specialise -fmax-simplifier-iterations=0
                      -fsimplifier-phases=0
     else
-        ghc-options: -O
+        ghc-options:
 
     if os(windows)
         ghc-options: -pgml g++ "-optl-Wl,--allow-multiple-definition"
@@ -477,7 +477,7 @@ executable Example13
         ghc-options: -fno-specialise -fmax-simplifier-iterations=0
                      -fsimplifier-phases=0
     else
-        ghc-options: -O
+        ghc-options:
 
     if os(windows)
         ghc-options: -pgml g++ "-optl-Wl,--allow-multiple-definition"

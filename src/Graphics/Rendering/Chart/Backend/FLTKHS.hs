@@ -23,7 +23,7 @@ Here, 'drawChart' is the provided draw method for the widget. A possible impleme
 could be this:
 
 @
--- The char itself, to be used here with 'Graphics.Rendering.Chart.Easy'
+-- The char itself, to be used here with "Graphics.Rendering.Chart.Easy"
 signal :: [Double] -> [(Double,Double)]
 signal xs = [ (x,(sin (x*3.14159/45) + 1) / 2 * sin (x*3.14159/5)) | x <- xs ]
 
@@ -33,7 +33,7 @@ drawChart widget = do
     -- determine a clipping area for the whole widget first
     rectangle' <- getRectangle widget
 
-    -- with this clipping area, we draw the graph. This graph is taken from Example1
+    -- with this clipping area, we draw the graph. This graph is taken from Example 1 <https://github.com/timbod7/haskell-chart/wiki/example-1>
     -- from the Chart library
     withFlClip rectangle' $
         renderToWidgetEC widget $ do
@@ -118,7 +118,7 @@ renderToWidget widget r = do
     runBackend (defaultEnv bitmapAlignmentFns) cr
 
 
--- | Render a Chart created with the statefull 'Graphics.Rendering.Chart.Easy' API.
+-- | Render a Chart created with the statefull "Graphics.Rendering.Chart.Easy" API.
 -- Calls 'renderToWidget' internally
 {-# INLINABLE renderToWidgetEC #-}
 renderToWidgetEC :: (Default r, ToRenderable r) => Ref Widget -> EC r () -> IO ()
