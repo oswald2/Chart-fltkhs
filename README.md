@@ -2,13 +2,15 @@
 
 FLTKHS backend for the Chart Haskell library.
 
-Builds the library and (fi specified) the examples, which resemble the examples from https://github.com/timbod7/haskell-chart/wiki.
+Builds the library and (if specified) the examples, which resemble the examples from https://github.com/timbod7/haskell-chart/wiki.
 
 Transparency is not supported by FLTK, so e.g. Examples 8, 9 and 10 from the Chart library will not look correctly. This is a limitation of FLTK itself.
 
 To render a Chart to a widget, it is best to create a custom widget and override it's draw method.
 
 ## Building ##
+
+### Stack ###
 
 Just use stack build. If you specify the flag 'examples', also the examples will be built:
 
@@ -17,6 +19,17 @@ Just use stack build. If you specify the flag 'examples', also the examples will
 To build with examples: 
 
 > stack build --flag Chart-fltkhs:examples
+
+### Cabal ###
+
+It is recommended to use cabal new-build:
+
+> cabal new-build
+
+To build with examples:
+
+> cabal new-build -f examples
+
 
 ### A usage example: ###
 
