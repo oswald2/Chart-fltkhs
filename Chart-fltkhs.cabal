@@ -51,24 +51,24 @@ library
         data-default-class >=0.1.2.0 && <0.2
 
     if ((impl(ghc >=7.10) && impl(ghc <8.0)) && flag(fastcompile))
-        ghc-options: -fno-specialise -fmax-simplifier-iterations=0
+        ghc-options: -O2 -fno-specialise -fmax-simplifier-iterations=0
                      -fsimplifier-phases=0
     else
-        ghc-options:  -Wall -Wcompat -Widentities
+        ghc-options: -O2 -Wall -Wcompat -Widentities
                      -Wincomplete-record-updates -Wincomplete-uni-patterns
                      -Wredundant-constraints -Wpartial-fields -funbox-strict-fields
 
 
     if os(windows)
-        ghc-options: -pgml g++ "-optl-Wl,--allow-multiple-definition"
+        ghc-options: -O2 -pgml g++ "-optl-Wl,--allow-multiple-definition"
                      "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc"
                      "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
 
     if os(osx)
-        ghc-options: "-optl-Wl,-lfltkc"
+        ghc-options: "-O2 -optl-Wl,-lfltkc"
 
     if (!os(osx) && !os(windows))
-        ghc-options: -pgml g++ "-optl-Wl,--allow-multiple-definition"
+        ghc-options: -O2 -pgml g++ "-optl-Wl,--allow-multiple-definition"
                      "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc"
                      "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
 
