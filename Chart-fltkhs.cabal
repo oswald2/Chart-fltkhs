@@ -1,6 +1,6 @@
 cabal-version: 2.4
 name: Chart-fltkhs
-version: 0.1.0.3
+version: 0.1.0.4
 license: BSD-3-Clause
 license-file: LICENSE
 maintainer: michael.oswald@onikudaki.net
@@ -17,7 +17,7 @@ source-repository head
     location: http://github.com/oswald2/Chart-fltkhs
 
 custom-setup
-    setup-depends: Cabal >=2.2.0.0 && <3,
+    setup-depends: Cabal >=2.2.0.0,
                    base >=4.4,
                    filepath -any
 
@@ -51,24 +51,24 @@ library
         data-default-class >=0.1.2.0 && <0.2
 
     if ((impl(ghc >=7.10) && impl(ghc <8.0)) && flag(fastcompile))
-        ghc-options: -O2 -fno-specialise -fmax-simplifier-iterations=0
+        ghc-options:  -fno-specialise -fmax-simplifier-iterations=0
                      -fsimplifier-phases=0
     else
-        ghc-options: -O2 -Wall -Wcompat -Widentities
+        ghc-options:  -Wall -Wcompat -Widentities
                      -Wincomplete-record-updates -Wincomplete-uni-patterns
                      -Wredundant-constraints -Wpartial-fields -funbox-strict-fields
 
 
     if os(windows)
-        ghc-options: -O2 -pgml g++ "-optl-Wl,--allow-multiple-definition"
+        ghc-options:  -pgml g++ "-optl-Wl,--allow-multiple-definition"
                      "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc"
                      "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
 
     if os(osx)
-        ghc-options: "-O2 -optl-Wl,-lfltkc"
+        ghc-options: " -optl-Wl,-lfltkc"
 
     if (!os(osx) && !os(windows))
-        ghc-options: -O2 -pgml g++ "-optl-Wl,--allow-multiple-definition"
+        ghc-options:  -pgml g++ "-optl-Wl,--allow-multiple-definition"
                      "-optl-Wl,--whole-archive" "-optl-Wl,-Bstatic" "-optl-Wl,-lfltkc"
                      "-optl-Wl,-Bdynamic" "-optl-Wl,--no-whole-archive"
 
