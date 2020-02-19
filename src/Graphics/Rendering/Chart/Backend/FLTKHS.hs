@@ -55,7 +55,9 @@ drawChart widget = do
 #-}
 module Graphics.Rendering.Chart.Backend.FLTKHS
   ( renderToWidget
+  , renderToWidgetOffscreen
   , renderToWidgetEC
+  , renderToWidgetOffscreenEC
   , runBackend
   , FLTKHSEnv
   , defaultEnv
@@ -125,6 +127,23 @@ renderToWidget widget r = do
   runBackend (defaultEnv bitmapAlignmentFns)
              (withTranslation (Point (fromIntegral x) (fromIntegral y)) cr)
 
+-- | Render a 'Renderable' to a widget, using an 'FlOffscreen' buffer for double buffering. 
+-- It renders to the full widget (it gets the rectangle
+-- of the widgets area) and uses that as the sizes for rendering. The offscreen
+-- buffer needs to be allocated beforehand and needs to have the necessary size
+-- (see FLTKs documentation for using the offscreen rendering)
+{-# INLINABLE renderToWidgetOffscreen #-}
+renderToWidgetOffscreen :: Ref Widget -> FlOffscreen -> Renderable a -> IO (PickFn a)
+renderToWidgetOffscreen widget offscreen r = do
+  rectangle'@(FL.Rectangle pos size) <- getRectangle widget
+  let (x, y, w', h') = fromRectangle rectangle'
+      cr             = render r (fromIntegral w', fromIntegral h')
+  flcBeginOffscreen offscreen 
+  fun <- runBackend (defaultEnv bitmapAlignmentFns)
+             (withTranslation (Point (fromIntegral x) (fromIntegral y)) cr)
+  flcEndOffscreen
+  flcCopyOffscreen pos size offscreen pos 
+  return fun
 
 -- | Render a Chart created with the statefull "Graphics.Rendering.Chart.Easy" API.
 -- Calls 'renderToWidget' internally
@@ -133,6 +152,17 @@ renderToWidgetEC
   :: (Default r, ToRenderable r) => Ref Widget -> EC r () -> IO ()
 renderToWidgetEC widget ec =
   void $ renderToWidget widget (toRenderable (execEC ec))
+
+-- | Render a Chart created with the statefull "Graphics.Rendering.Chart.Easy" API.
+-- Calls 'renderToWidgetOffscreen' internally, so it also needs a 'FlOffscreen'
+-- buffer as argument
+{-# INLINABLE renderToWidgetOffscreenEC #-}
+renderToWidgetOffscreenEC
+  :: (Default r, ToRenderable r) => Ref Widget -> FlOffscreen -> EC r () -> IO ()
+renderToWidgetOffscreenEC widget offscreen ec =
+  void $ renderToWidgetOffscreen widget offscreen (toRenderable (execEC ec))
+
+
 
 -- | Run this backends renderer
 {-# INLINABLE runBackend #-}
